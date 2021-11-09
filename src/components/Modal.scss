@@ -1,0 +1,42 @@
+.modal-container{
+  position: absolute;
+  z-index: 2;
+  background: linear-gradient(131deg, rgba(255,255,255,1) 0%, rgba(121,140,255,1) 33%, rgba(118,118,118,0.4209033955379027) 100%);
+  border-radius: 4px;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+  border: 1px solid black;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  width: 50vw;
+  span{
+    cursor: pointer;
+    position: absolute;
+    right: 0;
+    top: 0;
+    border-radius: 4px;
+    border: 1px solid grey;
+  }
+  span:hover{
+    color: red;
+  }
+  form{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 150px;
+    input{
+      outline: none;
+      border: 2px solid lightgray;
+      border-radius: 4px;
+      transition: all 0.1s ease-in-out;
+    }
+    input:focus{
+      border: 2px solid #2684FF;
+      border-radius: 4px;
+    }
+  }
+}

@@ -5,6 +5,7 @@ import "./Table.scss";
 import moment from 'moment';
 import { timeFormat } from './../constants';
 import { getAppointments } from '../functions';
+import Modal from './Modal';
 // Имеется 3 (сервиса) графика работы у сотрудников мед. учреждения:
 // C 08:00 – 17:00, продолжительность одного сеанса 30 минут.
 // С 07:00 – 17:00, продолжительность одного сеанса 15 минут.
@@ -32,19 +33,23 @@ import { getAppointments } from '../functions';
 // Сгенерировать таблицу, соответствующую рабочему графику.
 // Забронировать ячейки в соответствии с записью на приём и рабочим графиком. Работать должно на всех трёх серверах.
 
-function Table(props) {  
-  const options = [
+function Table(props) {
+  const [options, setOptions] = React.useState([
     { value: "15min", label: "15 минут", startTime: "07:00", endTime: "17:00" },
     { value: "30min", label: "30 минут", startTime: "08:00", endTime: "17:00" },
     { value: "75min", label: "1ч 15 минут", startTime: "09:00", endTime: "17:00" },
-  ];
-
+  ])
   const [schedule, setSchedule] = React.useState("");
   const [apointments, setApointments] = React.useState([]);
+  const [modal, setModal] = React.useState("none");
   React.useEffect(()=> {
     getAppointments().then(data => setApointments(data));
-    // isVacant()
   }, [schedule]);
+
+  const addOption = (option) => {
+    options.push(option);
+    setOptions(options)
+  }
 
   const isVacant = (interval) => {
     let intervalStartTime = moment([interval.startTime.slice(0,2), interval.startTime.slice(2)], "HH:mm");
@@ -53,7 +58,7 @@ function Table(props) {
       startTime = moment([startTime.slice(0,2), startTime.slice(3)], "HH:mm");
       endTime = moment([endTime.slice(0,2), endTime.slice(3)], "HH:mm");
       console.log("startTime",startTime.format(timeFormat), "intervalStartTime", intervalStartTime.format(timeFormat), "endTime", endTime.format(timeFormat), "intervalEndTime", intervalEndTime.format(timeFormat))
-      if(intervalStartTime.isSame(startTime) || intervalEndTime.isSame(endTime) || (startTime.isAfter(intervalStartTime) && endTime.isBefore(intervalEndTime)) || (intervalStartTime.isAfter(startTime) && intervalStartTime.isBefore(endTime))){
+      if(intervalStartTime.isSame(startTime) || intervalEndTime.isSame(endTime) || (intervalEndTime.isAfter(startTime) && intervalEndTime.isBefore(endTime)) || (startTime.isAfter(intervalStartTime) && endTime.isBefore(intervalEndTime)) || (intervalStartTime.isAfter(startTime) && intervalStartTime.isBefore(endTime))){
         return true
       } else return false
     })
@@ -65,7 +70,6 @@ function Table(props) {
     if(!schedule) return [];
     const scheduleNum = parseInt(schedule);
     const data = [];
-    // const data = [{"sch": "08:30-09:00", "status": "✔"}, {"sch": "09:00-09:30", "status": "✕"}];
     let {startTime, endTime} = options.find((optionItem, index) => optionItem.value === schedule) || {};
     let startTimePlusInterval = moment([startTime.slice(0,2), startTime.slice(3)], "HHmm");
     startTime = moment([startTime.slice(0,2), startTime.slice(3)], "HHmm");
@@ -85,45 +89,40 @@ function Table(props) {
   const tableInstance = useTable({ columns, data: scheduleData });
 
   const {getTableProps,getTableBodyProps,headerGroups,rows,prepareRow} = tableInstance;
- 
 
   return (
     <div className="table-container">
+      <Modal addOption={addOption} display={modal} setModal={setModal}/>
       <div className="react-select-main-container">
         <Select onChange={function(e){setSchedule(e?.value ?? "")}} placeholder="Выберите график" classNamePrefix="select" className="basic-single" isClearable={true} isSearchable={true} options={options}/>
+        <button onClick={() => setModal("flex")}>Добавить новый график</button>
       </div>
       <table {...getTableProps()}>
         <thead>
-          {// Loop over the header rows
+          {
           headerGroups.map(headerGroup => (
-            // Apply the header row props
             <tr {...headerGroup.getHeaderGroupProps()}>
-              {// Loop over the headers in each row
+              {
               headerGroup.headers.map(column => (
-                // Apply the header cell props
                 <th {...column.getHeaderProps()}>
-                  {// Render the header
+                  {
                   column.render('Header')}
                 </th>
               ))}
             </tr>
           ))}
         </thead>
-        {/* Apply the table body props */}
         <tbody {...getTableBodyProps()}>
-          {// Loop over the table rows
+          {
           rows.map(row => {
-            // Prepare the row for display
             prepareRow(row)
             return (
-              // Apply the row props
               <tr {...row.getRowProps()}>
-                {// Loop over the rows cells
+                {
                 row.cells.map(cell => {
-                  // Apply the cell props
                   return (
                     <td {...cell.getCellProps()}>
-                      {// Render the cell contents
+                      {
                       cell.render('Cell')}
                     </td>
                   )
@@ -133,7 +132,6 @@ function Table(props) {
           })}
         </tbody>
       </table>
-
     </div>
   );
 }
